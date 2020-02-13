@@ -1,0 +1,10 @@
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\bin\Debug\netcoreapp2.1\ArcanysDemo.Core.deps.json
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\bin\Debug\netcoreapp2.1\ArcanysDemo.Core.runtimeconfig.json
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\bin\Debug\netcoreapp2.1\ArcanysDemo.Core.runtimeconfig.dev.json
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\bin\Debug\netcoreapp2.1\ArcanysDemo.Core.dll
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\bin\Debug\netcoreapp2.1\ArcanysDemo.Core.pdb
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\obj\Debug\netcoreapp2.1\ArcanysDemo.Core.csprojAssemblyReference.cache
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\obj\Debug\netcoreapp2.1\ArcanysDemo.Core.AssemblyInfoInputs.cache
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\obj\Debug\netcoreapp2.1\ArcanysDemo.Core.AssemblyInfo.cs
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\obj\Debug\netcoreapp2.1\ArcanysDemo.Core.dll
+D:\test programs\ArcanysDemo\ArcanysDemo.Api\ArcanysDemo.Core\obj\Debug\netcoreapp2.1\ArcanysDemo.Core.pdb
