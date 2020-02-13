@@ -67,7 +67,7 @@ The endpoint should response a json object that contains information about the r
 
 ##Meta
 
-Mark Eulyses Yu –  m.yu@arcanys
+Mark Eulyses Yu –  m.yu@arcanys.com
 
 Distributed under free community license. See ``LICENSE`` for more information.
 
