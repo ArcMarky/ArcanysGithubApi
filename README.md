@@ -57,6 +57,10 @@ Open up your API testing tool like Postman, then create a request with a method 
 ```sh
 https://localhost:portnumberhere/api/github/GetGitHubUsers
 ```
+Body of the request as raw json format
+```sh
+["quiters89","someotherusers"]
+```
 
 The endpoint should response a json object that contains information about the result of the request.
 
