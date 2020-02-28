@@ -52,14 +52,14 @@ Modifiy serilog configuration according to your needs but the default configrati
 
 ##Usage example
 
-Open up your API testing tool like Postman, then create a request with a method of ``POST`` and access the end point
+Open up your API testing tool like Postman, then create a request with a method of ``GET`` and access the end point
 
 ```sh
 https://localhost:portnumberhere/api/github/GetGitHubUsers
 ```
 Body of the request as raw json format
 ```sh
-["quiters89","someotherusers"]
+https://locahost:yourportnumber/github?model=quiters89,tombrady,arcmarky
 ```
 
 The endpoint should response a json object that contains information about the result of the request.
@@ -68,6 +68,11 @@ The endpoint should response a json object that contains information about the r
 
 * 0.0.1
     * First Deployment
+* 0.0.2
+    * Fixed the issue on comma separated users
+    * Refactored the code base to follow the RESTful convention
+    * Added an exception middle ware and removed the try catch blocks
+    * Used IHttpClientFactory instead of HttpClient
 
 ##Meta
 
