@@ -8,9 +8,10 @@ namespace ArcanysDemo.Core.BLL.Interfaces
 {
     public interface IGitHubUsersService
     {
-        Task<ResponseObject> GetGitHubUsers(List<string> model);
+        Task<ResponseObject> GetGitHubUsers(string model);
         Task<ResponseObject> FetchDataByUserName(string username);
         ResponseObject GetUserFromMemory(string userName);
         ResponseObject ValidateArrayString(List<string> model);
+        Task<ResponseObject> FetchDataFromGitHub(string username);
     }
 }

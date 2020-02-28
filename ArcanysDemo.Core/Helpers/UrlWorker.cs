@@ -21,11 +21,10 @@ namespace ArcanysDemo.Core.Helpers
             {
                 return url + parameter + "?client_id=" + clientId + "&client_secret=" + ClientSecretKey;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                ErrorHandling.LogError(e, Enums.Severity.Error);
+                return "";
             }
-            return "";
         }
     }
 }

@@ -5,12 +5,16 @@ using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using ArcanysDemo.Core.Configurations;
+using ArcanysDemo.Core.Diagnostics;
 using ArcanysDemo.Core.Helpers;
+using ArcanysDemo.Core.Models;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +22,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Serialization;
+using Serilog;
+using Serilog.Core;
 
 namespace ArcanysDemo.Api
 {
@@ -38,6 +44,12 @@ namespace ArcanysDemo.Api
             }
 
             Configuration = builder.Build();
+
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(Configuration)
+                .CreateLogger();
+
+            Log.Information("Starting up");
         }
 
         public IConfiguration Configuration { get; }
@@ -61,6 +73,7 @@ namespace ArcanysDemo.Api
                     .AllowAnyHeader()
                     .AllowCredentials());
             });
+            services.AddHttpClient();
             services.AddMemoryCache();
             ApiHelper.InitializeClient();
             var assemblyCore = AppDomain.CurrentDomain.GetAssemblies().Where(x => x.FullName.Contains("ArcanysDemo"));
@@ -103,17 +116,22 @@ namespace ArcanysDemo.Api
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            loggerFactory.AddSerilog();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
             else
             {
-                app.UseExceptionHandler("/Error");
+                app.UseExceptionHandler(appError =>
+                {
+
+                });
                 app.UseHsts();
             }
+            app.UseMiddleware<LoggerMiddleware>();
             ServicePointManager.SecurityProtocol =  SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
             app.UseHttpsRedirection();
             app.UseStaticFiles();

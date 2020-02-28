@@ -23,18 +23,11 @@ namespace ArcanysDemo.Core.BLL.Services
         /// <param name="model">model to be stored</param>
         /// <param name="cacheName">name of the cache</param>
         /// <returns>response object</returns>
-        public ResponseObject StoreDataInMemory(dynamic model,string cacheName)
+        public ResponseObject StoreDataInMemory(dynamic model, string cacheName)
         {
-            var response = new ResponseObject(ResponseType.Success,string.Empty);
-            try
-            {
-                string modelToCache = JsonConvert.SerializeObject(model);
-                _memoryCache.Set<string>(cacheName, modelToCache, TimeSpan.FromMinutes(2));
-            }
-            catch (Exception e)
-            {
-                response = ErrorHandling.LogError(e,Utilities.Enums.Severity.Error);
-            }
+            var response = new ResponseObject(ResponseType.Success, string.Empty);
+            string modelToCache = JsonConvert.SerializeObject(model);
+            _memoryCache.Set<string>(cacheName, modelToCache, TimeSpan.FromMinutes(2));
             return response;
         }
 
@@ -46,21 +39,13 @@ namespace ArcanysDemo.Core.BLL.Services
         public ResponseObject GetDataInMemory(string cacheName)
         {
             var response = new ResponseObject(ResponseType.Success, string.Empty);
-            try
+            if (_memoryCache.TryGetValue<string>(cacheName, out string cacheValue))
             {
-                string cacheValue;
-                if (_memoryCache.TryGetValue<string>(cacheName, out cacheValue))
-                {
-                    response.Data = JsonConvert.DeserializeObject<GitHubUsersDto>(cacheValue);
-                }
-                else
-                {
-                    response = new ResponseObject(ResponseType.Undefined,string.Empty);
-                }
+                response.Data = JsonConvert.DeserializeObject<GitHubUsersDto>(cacheValue);
             }
-            catch (Exception e)
+            else
             {
-                response = ErrorHandling.LogError(e, Utilities.Enums.Severity.Error);
+                response = new ResponseObject(ResponseType.Undefined, string.Empty);
             }
             return response;
         }

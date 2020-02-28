@@ -14,7 +14,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.Http;
 namespace ArcanysDemo.Core.BLL.Services
 {
     public class GitHubUsersService : IGitHubUsersService
@@ -23,12 +23,14 @@ namespace ArcanysDemo.Core.BLL.Services
         private readonly AppSettings _appSettings;
         private readonly IMapper _mapper;
         private readonly IInMemoryWorkerService _inMemoryWorkerService;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public GitHubUsersService(Microsoft.Extensions.Options.IOptions<AppSettings> appSettingsOption, IMapper mapper, IInMemoryWorkerService inMemoryWorkerService)
+        public GitHubUsersService(Microsoft.Extensions.Options.IOptions<AppSettings> appSettingsOption, IMapper mapper, IInMemoryWorkerService inMemoryWorkerService, IHttpClientFactory httpClientFactory)
         {
             _appSettings = appSettingsOption.Value;
             _mapper = mapper;
             _inMemoryWorkerService = inMemoryWorkerService;
+            _httpClientFactory = httpClientFactory;
         }
 
         /// <summary>
@@ -36,55 +38,50 @@ namespace ArcanysDemo.Core.BLL.Services
         /// </summary>
         /// <param name="model">list of string username</param>
         /// <returns>response object</returns>
-        public async Task<ResponseObject> GetGitHubUsers(List<string> model)
+        public async Task<ResponseObject> GetGitHubUsers(string model)
         {
             var response = new ResponseObject(ResponseType.Success, string.Empty);
-            try
+            List<string> stringListModel = DataTypeConverter.ConvertStringToList(model);
+            var gitHubUserList = new List<GitHubUsersDto>();
+            stringListModel = StringSanitizer.SanitizeStringListByGitHubPolicy(stringListModel);
+            var modelValuesCount = ValidateArrayString(stringListModel);
+            if (!modelValuesCount.IsSuccess)
             {
-                var gitHubUserList = new List<GitHubUsersDto>();
-                model = StringSanitizer.SanitizeStringListByGitHubPolicy(model);
-                var modelValuesCount = ValidateArrayString(model);
-                if (!modelValuesCount.IsSuccess)
+                return modelValuesCount;
+            }
+            int numberOfCachedRecords = 0;
+            int numberOfRecordsNotFound = 0;
+            foreach (var item in stringListModel)
+            {
+                if (stringListModel.Any())
                 {
-                    return modelValuesCount;
-                }
-                int numberOfCachedRecords = 0;
-                int numberOfRecordsNotFound = 0;
-                foreach (var item in model)
-                {
-                    if (!string.IsNullOrEmpty(item))
+                    var sanitizedString = StringSanitizer.ToLowerAndTrim(item);
+                    var gitHubUserDto = new GitHubUsersDto();
+                    var fetchDataFromGithub = await FetchDataByUserName(sanitizedString);
+                    if (fetchDataFromGithub.IsSuccess)
                     {
-                        var sanitizedString = StringSanitizer.ToLowerAndTrim(item);
-                        var gitHubUserDto = new GitHubUsersDto();
-                        var fetchDataFromGithub = await FetchDataByUserName(sanitizedString);
-                        if (fetchDataFromGithub.IsSuccess)
-                        {
-                            gitHubUserDto = _mapper.Map<GitHubUsersDto>(fetchDataFromGithub.Data);
-                            _inMemoryWorkerService.StoreDataInMemory(gitHubUserDto, StringSanitizer.ToLowerAndTrim(gitHubUserDto.Login));
-                            gitHubUserList.Add(gitHubUserDto);
-                        }
-                        else if (fetchDataFromGithub.IsCached)
-                        {
-                            gitHubUserDto = _mapper.Map<GitHubUsersDto>(fetchDataFromGithub.Data);
-                            numberOfCachedRecords++;
-                            gitHubUserList.Add(gitHubUserDto);
-                        }
-                        else
-                        {
-                            numberOfRecordsNotFound++;
-                        }
+                        gitHubUserDto = _mapper.Map<GitHubUsersDto>(fetchDataFromGithub.Data);
+                        _inMemoryWorkerService.StoreDataInMemory(gitHubUserDto, StringSanitizer.ToLowerAndTrim(gitHubUserDto.Login));
+                        gitHubUserList.Add(gitHubUserDto);
+                    }
+                    else if (fetchDataFromGithub.IsCached)
+                    {
+                        gitHubUserDto = _mapper.Map<GitHubUsersDto>(fetchDataFromGithub.Data);
+                        numberOfCachedRecords++;
+                        gitHubUserList.Add(gitHubUserDto);
+                    }
+                    else
+                    {
+                        numberOfRecordsNotFound++;
                     }
                 }
-                response.Data = gitHubUserList.OrderBy(x => x.Name);
-                response.Message = numberOfCachedRecords + " out of " + modelValuesCount.Data + " is cached and " + numberOfRecordsNotFound + " record(s) were not found. Username that violates github policy were removed.";
             }
-            catch (Exception e)
-            {
-                response = ErrorHandling.LogError(e, Enums.Severity.Error);
-            }
-
+            response.Data = gitHubUserList.OrderBy(x => x.Name);
+            response.Message = numberOfCachedRecords + " out of " + modelValuesCount.Data + " is cached and " + numberOfRecordsNotFound + " record(s) were not found. Username that violates github policy were removed.";
             return response;
         }
+
+
 
         /// <summary>
         /// Gets the data by username
@@ -94,37 +91,73 @@ namespace ArcanysDemo.Core.BLL.Services
         public async Task<ResponseObject> FetchDataByUserName(string username)
         {
             var response = new ResponseObject(ResponseType.Success, string.Empty);
-            try
+
+            var inMemoryData = GetUserFromMemory(username);
+            if (inMemoryData.IsSuccess)
             {
-                var inMemoryData = GetUserFromMemory(username);
-                if (inMemoryData.IsSuccess)
+                return new ResponseObject(ResponseType.IsCached, string.Empty, inMemoryData.Data);
+            }
+            else
+            {
+                var getDataFromGitHub = await FetchDataFromGitHub(username);
+                if (getDataFromGitHub.IsSuccess)
                 {
-                    return new ResponseObject(ResponseType.IsCached, string.Empty, inMemoryData.Data);
+                    response.Data = getDataFromGitHub.Data;
                 }
                 else
                 {
-                    Uri uri = new Uri(UrlWorker.GitHubUrlConstructor(_appSettings.GitHubUsersUrl, _appSettings.GitHubClientId, _appSettings.GitHubClientSecret, username));
-                    using (HttpResponseMessage httpResponse = await ApiHelper.ApiClient.GetAsync(uri))
-                    {
-                        if (httpResponse.IsSuccessStatusCode)
-                        {
-                            var responseFromGithub = await httpResponse.Content.ReadAsStringAsync();
-                            response.Data = JsonConvert.DeserializeObject<GitHubUsers>(responseFromGithub);
-                        }
-                        else
-                        {
-                            response = new ResponseObject(ResponseType.Warning, string.Empty);
-                            ErrorHandling.LogCustomError(httpResponse.ReasonPhrase, Enums.Severity.Information);
-                        }
-                    }
+                    response = getDataFromGitHub;
                 }
-            }
-            catch (Exception e)
-            {
-                response = ErrorHandling.LogError(e, Enums.Severity.Error);
             }
             return response;
         }
+        public async Task<ResponseObject> FetchDataFromGitHub(string username)
+        {
+            var response = new ResponseObject(ResponseType.Success, string.Empty);
+            Uri uri = new Uri(UrlWorker.GitHubUrlConstructor(_appSettings.GitHubUsersUrl, _appSettings.GitHubClientId, _appSettings.GitHubClientSecret, username));
+            HttpRequestMessage httpRequest = new HttpRequestMessage();
+            httpRequest.Headers.Add("User-Agent", "ArcanysDemo");
+            httpRequest.Headers.Add("Accept", "*/*");
+            httpRequest.Headers.Add("Host", "api.github.com");
+            httpRequest.RequestUri = uri;
+            httpRequest.Method = HttpMethod.Get;
+            var client = _httpClientFactory.CreateClient();
+            var httpResponse = await client.SendAsync(httpRequest);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var responseFromGithub = await httpResponse.Content.ReadAsStringAsync();
+                response.Data = JsonConvert.DeserializeObject<GitHubUsers>(responseFromGithub);
+            }
+            else
+            {
+                response = new ResponseObject(ResponseType.Warning, string.Empty);
+                ErrorHandling.LogCustomError("Username not found.", Enums.Severity.Information);
+            }
+
+            return response;
+        }
+
+
+        //public async Task<ResponseObject> FetchDataFromGitHub(string username)
+        //{
+        //    var response = new ResponseObject(ResponseType.Success, string.Empty);
+        //    Uri uri = new Uri(UrlWorker.GitHubUrlConstructor(_appSettings.GitHubUsersUrl, _appSettings.GitHubClientId, _appSettings.GitHubClientSecret, username));
+        //    using (HttpResponseMessage httpResponse = await ApiHelper.ApiClient.GetAsync(uri))
+        //    {
+
+        //        if (httpResponse.IsSuccessStatusCode)
+        //        {
+        //            var responseFromGithub = await httpResponse.Content.ReadAsStringAsync();
+        //            response.Data = JsonConvert.DeserializeObject<GitHubUsers>(responseFromGithub);
+        //        }
+        //        else
+        //        {
+        //            response = new ResponseObject(ResponseType.Warning, string.Empty);
+        //            ErrorHandling.LogCustomError("Username not found.", Enums.Severity.Information);
+        //        }
+        //    }
+        //    return response;
+        //}
 
         /// <summary>
         /// Fetches user from memory
@@ -134,22 +167,17 @@ namespace ArcanysDemo.Core.BLL.Services
         public ResponseObject GetUserFromMemory(string userName)
         {
             var response = new ResponseObject(ResponseType.Success, string.Empty);
-            try
+
+            var inMemoryResult = _inMemoryWorkerService.GetDataInMemory(userName);
+            if (inMemoryResult.IsSuccess)
             {
-                var inMemoryResult = _inMemoryWorkerService.GetDataInMemory(userName);
-                if (inMemoryResult.IsSuccess)
-                {
-                    response.Data = inMemoryResult.Data;
-                }
-                else
-                {
-                    response = new ResponseObject(ResponseType.Undefined, string.Empty);
-                }
+                response.Data = inMemoryResult.Data;
             }
-            catch (Exception e)
+            else
             {
-                response = ErrorHandling.LogError(e, Enums.Severity.Error);
+                response = new ResponseObject(ResponseType.Undefined, string.Empty);
             }
+
             return response;
         }
 
@@ -161,21 +189,15 @@ namespace ArcanysDemo.Core.BLL.Services
         public ResponseObject ValidateArrayString(List<string> model)
         {
             var response = new ResponseObject(ResponseType.Success, string.Empty);
-            try
+
+            int numberOfArray = model.Count();
+            if (numberOfArray > 10)
             {
-                int numberOfArray = model.Count();
-                if (numberOfArray > 10)
-                {
-                    return new ResponseObject(ResponseType.Error, "Only a max of 10 users per request is allowed.");
-                }
-                else
-                {
-                    response.Data = numberOfArray;
-                }
+                return new ResponseObject(ResponseType.Error, "Only a max of 10 users per request is allowed.");
             }
-            catch (Exception e)
+            else
             {
-                response = ErrorHandling.LogError(e, Enums.Severity.Error);
+                response.Data = numberOfArray;
             }
             return response;
         }

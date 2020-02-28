@@ -17,12 +17,6 @@ namespace ArcanysDemo.Tests
 {
     public class UnitTest1
     {
-        [Fact]
-        public void Test1()
-        {
-
-        }
-     
 
         [Theory(DisplayName = "Validate Count Of Array String")]
         [InlineData("test1", "test2", "test3", "test4", "test5")]
@@ -54,17 +48,19 @@ namespace ArcanysDemo.Tests
         [InlineData("quiters89")]
         public void TestGetDataByUserName(string userName)
         {
-            var mockedAppSettings = new AppSettings();
-            mockedAppSettings.ErrorLogLocation = "D:\\ErrorLog";
-            mockedAppSettings.GitHubClientId = "e67b62c814d7d3bd188c";
-            mockedAppSettings.GitHubClientSecret = "113c070c1a13688d07067dedef916bfbfe4be07b";
-            mockedAppSettings.GitHubUsersUrl = "https://api.github.com/users/";
+            var mockedAppSettings = new AppSettings
+            {
+                ErrorLogLocation = "D:\\ErrorLog",
+                GitHubClientId = "e67b62c814d7d3bd188c",
+                GitHubClientSecret = "113c070c1a13688d07067dedef916bfbfe4be07b",
+                GitHubUsersUrl = "https://api.github.com/users/"
+            };
             ApiHelper.InitializeClient();
             var appSettingsMock = Options.Create<AppSettings>(mockedAppSettings);
             var mappingMock = new Mock<IMapper>();
             var inMemoryServiceMock = new Mock<IInMemoryWorkerService>();
             var gitHubUsersService = new GitHubUsersService(appSettingsMock, mappingMock.Object, inMemoryServiceMock.Object);
-            var result = gitHubUsersService.FetchDataByUserName(userName).GetAwaiter().GetResult().IsSuccess;
+            var result = gitHubUsersService.FetchDataFromGitHub(userName).GetAwaiter().GetResult().IsSuccess;
             Assert.True(result);
         }
         

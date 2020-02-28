@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\test programs\\ArcanysDemo\\ArcanysDemo.Api\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj": {}
+    "D:\\git clones\\githubapi\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj": {}
   },
   "projects": {
-    "D:\\test programs\\ArcanysDemo\\ArcanysDemo.Api\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj": {
+    "D:\\git clones\\githubapi\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\test programs\\ArcanysDemo\\ArcanysDemo.Api\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj",
+        "projectUniqueName": "D:\\git clones\\githubapi\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj",
         "projectName": "ArcanysDemo.Core",
-        "projectPath": "D:\\test programs\\ArcanysDemo\\ArcanysDemo.Api\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj",
+        "projectPath": "D:\\git clones\\githubapi\\ArcanysDemo.Core\\ArcanysDemo.Core.csproj",
         "packagesPath": "C:\\Users\\MYu\\.nuget\\packages\\",
-        "outputPath": "D:\\test programs\\ArcanysDemo\\ArcanysDemo.Api\\ArcanysDemo.Core\\obj\\",
+        "outputPath": "D:\\git clones\\githubapi\\ArcanysDemo.Core\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Microsoft\\Xamarin\\NuGet\\",
@@ -64,6 +64,10 @@
               "version": "[2.1.1, )"
             },
             "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[2.1.1, )"
+            },
+            "Microsoft.Extensions.Http": {
               "target": "Package",
               "version": "[2.1.1, )"
             },

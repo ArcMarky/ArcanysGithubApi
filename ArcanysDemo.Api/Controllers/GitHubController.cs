@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ArcanysDemo.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("/[controller]")]
     [ApiController]
     public class GitHubController : Controller
     {
@@ -19,10 +19,18 @@ namespace ArcanysDemo.Api.Controllers
         {
             _gitHubUsersService = gitHubUsersService;
         }
-        [HttpPost("GetGitHubUsers")]
-        public async Task<ResponseObject> GetGitHubUsers([FromBody]List<string> model)
+        [HttpGet]
+        public async Task<IActionResult> GitHubUsers(string model)
         {
-            return await _gitHubUsersService.GetGitHubUsers(model);
+            if (!string.IsNullOrEmpty(model))
+            {
+                return Ok(await _gitHubUsersService.GetGitHubUsers(model));
+            }
+            else
+            {
+                return BadRequest(new { Warning = "Stack Trace : parameter string is incorrect, null or empty."});
+            }
+          
         }
     }
 }
