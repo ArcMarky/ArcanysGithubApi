@@ -111,6 +111,12 @@ namespace ArcanysDemo.Core.BLL.Services
             }
             return response;
         }
+
+        /// <summary>
+        /// Fetches data from github using IHttpClientFactory
+        /// </summary>
+        /// <param name="username">username to be fetched</param>
+        /// <returns>response object from github</returns>
         public async Task<ResponseObject> FetchDataFromGitHub(string username)
         {
             var response = new ResponseObject(ResponseType.Success, string.Empty);
@@ -136,28 +142,6 @@ namespace ArcanysDemo.Core.BLL.Services
 
             return response;
         }
-
-
-        //public async Task<ResponseObject> FetchDataFromGitHub(string username)
-        //{
-        //    var response = new ResponseObject(ResponseType.Success, string.Empty);
-        //    Uri uri = new Uri(UrlWorker.GitHubUrlConstructor(_appSettings.GitHubUsersUrl, _appSettings.GitHubClientId, _appSettings.GitHubClientSecret, username));
-        //    using (HttpResponseMessage httpResponse = await ApiHelper.ApiClient.GetAsync(uri))
-        //    {
-
-        //        if (httpResponse.IsSuccessStatusCode)
-        //        {
-        //            var responseFromGithub = await httpResponse.Content.ReadAsStringAsync();
-        //            response.Data = JsonConvert.DeserializeObject<GitHubUsers>(responseFromGithub);
-        //        }
-        //        else
-        //        {
-        //            response = new ResponseObject(ResponseType.Warning, string.Empty);
-        //            ErrorHandling.LogCustomError("Username not found.", Enums.Severity.Information);
-        //        }
-        //    }
-        //    return response;
-        //}
 
         /// <summary>
         /// Fetches user from memory
